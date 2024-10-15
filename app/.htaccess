@@ -6,6 +6,3 @@
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteRule ^(.*)$ index.php [QSA,L]
 </IfModule>
-
-
-support@mail.bg, webmaster@mail.bg
