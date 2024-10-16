@@ -7,7 +7,7 @@ services:
     volumes:
       - ./app:/var/www/html
     ports:
-      - "8080:80"
+      - "8808:80"
     command: bash -c "composer install && apache2-foreground"
   db:
     image: mysql:8.0
@@ -19,5 +19,5 @@ services:
     volumes:
       - ./mysql-init:/docker-entrypoint-initdb.d
     ports:
-      - "3307:3306"
+      - "3303:3306"
     restart: unless-stopped

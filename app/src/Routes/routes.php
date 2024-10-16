@@ -103,12 +103,25 @@ $requestMethod = $_SERVER['REQUEST_METHOD'];
 $requestUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
 // Dispatch the request based on the method and URI
-$response = Router::dispatch($requestMethod, $requestUri);
+
+try{
+    $response = Router::dispatch($requestMethod, $requestUri);
 
 // Output the response (this could be HTML, JSON, etc.)
-if (is_string($response)) {
-    echo $response;
-} else {
-    header('Content-Type: application/json; charset=utf-8');
-    echo json_encode($response);
+    if (is_string($response)) {
+        echo $response;
+    } else {
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode($response);
+    }
+}catch (\Exception $e){
+
+
+    http_response_code(404);
+
+    trace($e->getMessage() );
+    trace($e );
+//
+//   // header('Content-Type: application/json; charset=utf-8');
+//    echo json_encode($response);
 }

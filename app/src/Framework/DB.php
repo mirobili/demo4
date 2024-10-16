@@ -4,6 +4,7 @@ namespace App\Framework;
 
 use PDO;
 use PDOException;
+use function PHPUnit\Framework\throwException;
 
 class DB
 {
@@ -52,7 +53,7 @@ class DB
             //  echo "Connected successfully!";
         } catch (PDOException $e) {
             // Catch any PDO exceptions and display the error message
-            echo "Connection failed: " . $e->getMessage();
+           // echo "Connection failed: " . $e->getMessage();
             throw $e;
         }
 
@@ -67,6 +68,7 @@ class DB
 
 //            trace($sql);
 //            trace($params);
+    try{
 
         self::connect();
 
@@ -82,24 +84,41 @@ class DB
         //  $stmt->debugDumpParams();
         // Execute the statement and check for errors
         if (!$stmt->execute()) {
-            echo "\nPDO::errorInfo():\n";
-            print_r($stmt->errorInfo()); // Use stmt's errorInfo to get specific error details
-            return false; // Return false on failure
+//            echo "\nPDO::errorInfo():\n";
+//            print_r($stmt->errorInfo()); // Use stmt's errorInfo to get specific error details
+//            return false; // Return false on failure
+
+            throwException(self::$pdo->errorInfo());
         }
 
         if (!$stmt) {
-            echo "\nPDO::errorInfo():\n";
-            print_r(self::$pdo->errorInfo());
+           // echo "\nPDO::errorInfo():\n";
+            // print_r(self::$pdo->errorInfo());
+            throwException(self::$pdo->errorInfo());
         }
 
         return $stmt;
+    }catch (PDOException $e){
+        // trace($e->getMessage());
+        throw $e;
+    }
+
+
+
     }
 
     public static function query($sql, array $params = [])
     {
-        $stmt = self::exec($sql, $params);
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        return $rows;
+        try {
+
+            $stmt = self::exec($sql, $params);
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return $rows;
+        } catch (PDOException $e) {
+           // trace($e->getMessage());
+            throw $e;
+        }
+
     }
 
     public static function getByID($sql, $id)

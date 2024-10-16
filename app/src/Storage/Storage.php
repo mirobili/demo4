@@ -26,27 +26,32 @@ class Storage
 
     public static function find(string $model_class_name, array $criteria): array
     {
+        try {
+            $table = $model_class_name::getTableName();
 
-        $table = $model_class_name::getTableName();
+            if ($criteria) {
+                foreach ($criteria as $key => $value) {
+                    $wher[] = " $key = :$key ";
+                }
 
-        if ($criteria) {
-            foreach ($criteria as $key => $value) {
-                $wher[] = " $key = :$key ";
+                $wher_str = implode(' and ', $wher);
+                $qry = "SELECT * FROM $table where $wher_str ";
+            } else {
+                $qry = "SELECT * FROM $table";
             }
 
-            $wher_str = implode(' and ', $wher);
-            $qry = "SELECT * FROM $table where $wher_str ";
-        } else {
-            $qry = "SELECT * FROM $table";
+            $res = DB::query($qry, $criteria);
+            $data = [];
+            foreach ($res as $row) {
+
+                $data[] = $model_class_name::makeFromArray($row);
+            }
+            return $data;
+        }catch (Exception $e) {
+            trace($e->getMessage());
+            throw $e;
         }
 
-        $res = DB::query($qry, $criteria);
-        $data = [];
-        foreach ($res as $row) {
-
-            $data[] = $model_class_name::makeFromArray($row);
-        }
-        return $data;
     }
 
     public static function save(\App\Framework\Entity $entity)

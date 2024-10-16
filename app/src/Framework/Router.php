@@ -40,72 +40,95 @@ class Router
     public static function dispatch($requestMethod, $requestUri)
     {
         // Normalize the URI (trim spaces, remove trailing slash if length > 1)
-        $requestUri = trim($requestUri);
-        $requestUri = (strlen($requestUri) > 1) ? rtrim($requestUri, '/') : $requestUri;
+        try {
+            $requestUri = trim($requestUri);
+            $requestUri = (strlen($requestUri) > 1) ? rtrim($requestUri, '/') : $requestUri;
 
-        foreach (self::$routes as $routeData) {
-            // Check if the request method matches the route method
-            if ($routeData['method'] === strtoupper($requestMethod)) {
-                // Replace all {param} placeholders with regex to match dynamic parameters
-                $pattern = preg_replace('/\{[a-zA-Z0-9_]+\}/', '([a-zA-Z0-9_]+)', $routeData['route']);
+            foreach (self::$routes as $routeData) {
+                // Check if the request method matches the route method
+                if ($routeData['method'] === strtoupper($requestMethod)) {
+                    // Replace all {param} placeholders with regex to match dynamic parameters
+                    $pattern = preg_replace('/\{[a-zA-Z0-9_]+\}/', '([a-zA-Z0-9_]+)', $routeData['route']);
 
-                // Check if the URI matches the route pattern
-                if (preg_match("#^$pattern$#", $requestUri, $matches)) {
-                    // Extract controller, action, params, and redirect info from route data
-                    list($controller, $action, $params, $redirect_to) = [
-                        $routeData['controller'],
-                        $routeData['action'],
-                        $routeData['params'],
-                        $routeData['redirect_to']
-                    ];
+                    // Check if the URI matches the route pattern
+                    if (preg_match("#^$pattern$#", $requestUri, $matches)) {
+                        // Extract controller, action, params, and redirect info from route data
+                        list($controller, $action, $params, $redirect_to) = [
+                            $routeData['controller'],
+                            $routeData['action'],
+                            $routeData['params'],
+                            $routeData['redirect_to']
+                        ];
 
-                    array_shift($matches);  // Remove the full regex match
-                    //$params = array_merge($params, $matches);  // Merge static and dynamic params
-                    $args = [];
+                        array_shift($matches);  // Remove the full regex match
+                        //$params = array_merge($params, $matches);  // Merge static and dynamic params
+                        $args = [];
 
-                    // trace($params);
-                    // trace($matches);
-                    if(  $requestMethod =='POST' || $routeData['is_rest']){
+                        // trace($params);
+                        // trace($matches);
+                        if(  $requestMethod =='POST' || $routeData['is_rest']){
 
-                        $args[] = $routeData['params'];
-                    }else{
-                        if($params) {
-                            foreach ($params as $key => $name) {
-                                $args[$name] = $matches[$key];  // Merge static and dynamic params
-                            }
+                            $args[] = $routeData['params'];
                         }else{
-                            foreach ($matches as $match) {
-                                $args[ ] = $match;  // Merge static and dynamic params
+                            if($params) {
+                                foreach ($params as $key => $name) {
+                                    $args[$name] = $matches[$key];  // Merge static and dynamic params
+                                }
+                            }else{
+                                foreach ($matches as $match) {
+                                    $args[ ] = $match;  // Merge static and dynamic params
+                                }
                             }
                         }
-                    }
 
 
-                   // trace($args);
-                   // $params = array_merge($params, $matches);  // Merge static and dynamic params
+                        // trace($args);
+                        // $params = array_merge($params, $matches);  // Merge static and dynamic params
 
 
-                    // Check if the controller method exists
-                    if (!method_exists($controller, $action)) {
-                        http_response_code(404);
-                        return "404: $controller::$action doesn't exist.";
-                    }
+                        // Check if the controller method exists
+                        if (!method_exists($controller, $action)) {
+                            http_response_code(404);
+                            return "404: $controller::$action doesn't exist.";
+                        }
 
-                    // Call the controller method and pass parameters
-                  //  $result = call_user_func_array([new $controller, $action], $params);
-                    $result = call_user_func_array([new $controller, $action],  $args );
+                        // Call the controller method and pass parameters
+                        //  $result = call_user_func_array([new $controller, $action], $params);
+                        $result = call_user_func_array([new $controller, $action],  $args );
 
-                    // Handle redirect if specified
-                    if ($redirect_to != '') {
-                        $redirect_to = self::replacePlaceholders($redirect_to, $result);
-                        header("Location: $redirect_to");
-                        exit;  // Stop execution after redirect
-                    } else {
-                        return $result;  // Return the result if no redirect
+                        // Handle redirect if specified
+                        if ($redirect_to != '') {
+                            $redirect_to = self::replacePlaceholders($redirect_to, $result);
+                            header("Location: $redirect_to");
+                            exit;  // Stop execution after redirect
+                        } else {
+                            return $result;  // Return the result if no redirect
+                        }
                     }
                 }
             }
+            http_response_code(404);
+            $error_message = '404 Not Found';
+            //return $error_message;
+            return $error_message ;
+//            throw new \Exception($error_message);
+
+        }catch (\Exception $e) {
+
+            return $e->getMessage();
+           // throw $e;
+
+//            http_response_code(500);
+//            $error_message = '404 Not Found';
+//            //return $error_message;
+//            throw new \Exception($error_message);
+
+//            //trace($e->getMessage());
+//            return $error_message;
+//            exit();
         }
+
+
 
         // If no route matches, return 404
         http_response_code(404);
